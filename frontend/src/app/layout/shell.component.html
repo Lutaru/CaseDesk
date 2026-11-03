@@ -1,0 +1,2351 @@
+<!-- LOGIN SCREEN (VISIBLE SI NO HAY SESIÓN ACTIVA) -->
+@if (!apiService.currentUser()) {
+  <div class="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 p-4 text-slate-100 select-none">
+    <div class="bg-slate-900/95 border border-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl shadow-blue-950/50 backdrop-blur-md animate-fade-in">
+      <!-- Brand Header -->
+      <div class="text-center mb-6">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-black text-2xl text-white shadow-lg shadow-blue-500/30 mb-3">
+          CD
+        </div>
+        <h1 class="text-2xl font-black tracking-tight text-white">Case<span class="text-blue-400">Desk</span></h1>
+        <p class="text-xs text-slate-400 mt-1">Plataforma Centralizada de Casos Técnicos & DBs</p>
+      </div>
+
+      <!-- Error Alert -->
+      @if (loginError(); as err) {
+        <div class="mb-4 p-3 rounded-xl bg-red-900/40 border border-red-700/60 text-red-200 text-xs flex items-center space-x-2 animate-slide-in">
+          <span>⚠️</span>
+          <span>{{ err }}</span>
+        </div>
+      }
+
+      <!-- Formulario de Acceso -->
+      <form (ngSubmit)="handleLogin()" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Usuario</label>
+          <div class="relative">
+            <span class="absolute left-3 top-2.5 text-slate-500 text-sm">👤</span>
+            <input
+              type="text"
+              name="username"
+              [(ngModel)]="loginUsername"
+              placeholder="Ingresa tu usuario (ej. admin)"
+              class="w-full bg-slate-800/80 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Contraseña</label>
+          <div class="relative">
+            <span class="absolute left-3 top-2.5 text-slate-500 text-sm">🔒</span>
+            <input
+              type="password"
+              name="password"
+              [(ngModel)]="loginPassword"
+              placeholder="Ingresa tu contraseña"
+              class="w-full bg-slate-800/80 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              required
+            />
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          [disabled]="isLoggingIn()"
+          class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 active:scale-98 text-white rounded-xl font-bold text-xs shadow-lg shadow-blue-600/30 transition-all duration-150 cursor-pointer disabled:opacity-50 flex items-center justify-center space-x-2"
+        >
+          @if (isLoggingIn()) {
+            <span>Iniciando sesión...</span>
+          } @else {
+            <span>Iniciar Sesión en CaseDesk</span>
+            <span>➔</span>
+          }
+        </button>
+      </form>
+
+      <!-- Accesos Rápidos de Demostración -->
+      <div class="mt-6 pt-5 border-t border-slate-800/80 text-center">
+        <p class="text-[11px] font-semibold text-slate-400 mb-2.5">Acceso rápido con usuarios de prueba:</p>
+        <div class="grid grid-cols-3 gap-2 text-[10px]">
+          <button
+            type="button"
+            (click)="quickLogin('admin', 'admin123')"
+            class="p-2 rounded-lg bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 hover:border-blue-500 text-slate-300 font-semibold transition cursor-pointer"
+          >
+            <span class="block font-bold text-white">admin</span>
+            <span class="text-[9px] text-blue-400">Super Admin</span>
+          </button>
+
+          <button
+            type="button"
+            (click)="quickLogin('juandev', 'dev123')"
+            class="p-2 rounded-lg bg-slate-800/80 hover:bg-emerald-600/30 border border-slate-700 hover:border-emerald-500 text-slate-300 font-semibold transition cursor-pointer"
+          >
+            <span class="block font-bold text-white">juandev</span>
+            <span class="text-[9px] text-emerald-400">Desarrollador</span>
+          </button>
+
+          <button
+            type="button"
+            (click)="quickLogin('laurasoporte', 'soporte123')"
+            class="p-2 rounded-lg bg-slate-800/80 hover:bg-purple-600/30 border border-slate-700 hover:border-purple-500 text-slate-300 font-semibold transition cursor-pointer"
+          >
+            <span class="block font-bold text-white">laurasoporte</span>
+            <span class="text-[9px] text-purple-400">Soporte</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+} @else {
+  <!-- APP SHELL PRINCIPAL CON SESIÓN INICIADA Y DASHBOARD LATERAL -->
+  <div class="flex h-screen w-screen overflow-hidden bg-slate-950 text-slate-800">
+
+    <!-- 1. DASHBOARD LATERAL / SIDEBAR DE NAVEGACIÓN -->
+    <aside
+      class="bg-slate-950 border-r border-slate-800/80 text-slate-300 flex flex-col shrink-0 select-none transition-all duration-300 z-30 shadow-2xl relative"
+      [class.w-64]="!isSidebarCollapsed()"
+      [class.w-20]="isSidebarCollapsed()"
+    >
+      <!-- BRAND & TOGGLE HEADER -->
+      <div class="h-16 flex items-center justify-between px-4 border-b border-slate-800/80 shrink-0">
+        <div
+          class="flex items-center space-x-3 cursor-pointer overflow-hidden transition-transform active:scale-95"
+          (click)="setSubmenu('dashboard')"
+          title="CaseDesk - Inicio"
+        >
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center font-black text-white text-base shadow-lg shadow-blue-600/30 shrink-0">
+            CD
+          </div>
+          @if (!isSidebarCollapsed()) {
+            <div class="truncate">
+              <div class="flex items-center space-x-1.5">
+                <span class="text-base font-black tracking-tight text-white">Case<span class="text-blue-400">Desk</span></span>
+                <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-blue-900/60 text-blue-300 border border-blue-700/50 font-bold uppercase tracking-wider">v1.0</span>
+              </div>
+              <p class="text-[10px] text-slate-400 font-medium truncate">Soporte & Diagnóstico</p>
+            </div>
+          }
+        </div>
+
+        <!-- Botón para colapsar/expandir sidebar -->
+        <button
+          (click)="toggleSidebar()"
+          class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition cursor-pointer shrink-0"
+          [title]="isSidebarCollapsed() ? 'Expandir menú lateral' : 'Colapsar menú lateral'"
+        >
+          <span class="text-xs">{{ isSidebarCollapsed() ? '▶' : '◀' }}</span>
+        </button>
+      </div>
+
+      <!-- LISTA DE MÓDULOS Y SUBMÓDULOS (SCROLLABLE) -->
+      <div class="flex-1 overflow-y-auto py-3 px-2 space-y-3 custom-scrollbar text-xs">
+
+        <!-- MÓDULO 1: DASHBOARD / MÉTRICAS -->
+        <div class="space-y-1">
+          <div
+            (click)="toggleModuleExpansion('dashboard')"
+            class="flex items-center justify-between px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 cursor-pointer text-[11px] font-bold uppercase tracking-wider transition group"
+          >
+            <div class="flex items-center space-x-2">
+              <span class="text-sm">📊</span>
+              @if (!isSidebarCollapsed()) {
+                <span>Dashboard</span>
+              }
+            </div>
+            @if (!isSidebarCollapsed()) {
+              <span class="text-[9px] text-slate-500 group-hover:text-slate-300 transition-transform duration-200"
+                [class.rotate-180]="expandedModules()['dashboard']">▼</span>
+            }
+          </div>
+
+          @if (expandedModules()['dashboard'] && !isSidebarCollapsed()) {
+            <div class="pl-2 space-y-0.5 animate-slide-in">
+              <button
+                (click)="setSubmenu('dashboard')"
+                class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left font-medium transition cursor-pointer"
+                [class.bg-blue-600]="activeSubmenu() === 'dashboard'"
+                [class.text-white]="activeSubmenu() === 'dashboard'"
+                [class.shadow-md]="activeSubmenu() === 'dashboard'"
+                [class.shadow-blue-600/30]="activeSubmenu() === 'dashboard'"
+                [class.text-slate-300]="activeSubmenu() !== 'dashboard'"
+                [class.hover:bg-slate-800/80]="activeSubmenu() !== 'dashboard'"
+                [class.hover:text-white]="activeSubmenu() !== 'dashboard'"
+              >
+                <div class="flex items-center space-x-2.5">
+                  <span class="text-xs">📈</span>
+                  <span>Panel de Control</span>
+                </div>
+                <span class="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                  [class.bg-blue-500]="activeSubmenu() === 'dashboard'"
+                  [class.text-white]="activeSubmenu() === 'dashboard'"
+                  [class.bg-slate-800]="activeSubmenu() !== 'dashboard'"
+                  [class.text-slate-400]="activeSubmenu() !== 'dashboard'">
+                  KPIs
+                </span>
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- MÓDULO 2: GESTIÓN DE CASOS -->
+        <div class="space-y-1">
+          <div
+            (click)="toggleModuleExpansion('cases')"
+            class="flex items-center justify-between px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 cursor-pointer text-[11px] font-bold uppercase tracking-wider transition group"
+          >
+            <div class="flex items-center space-x-2">
+              <span class="text-sm">📂</span>
+              @if (!isSidebarCollapsed()) {
+                <span>Gestión de Casos</span>
+              }
+            </div>
+            @if (!isSidebarCollapsed()) {
+              <span class="text-[9px] text-slate-500 group-hover:text-slate-300 transition-transform duration-200"
+                [class.rotate-180]="expandedModules()['cases']">▼</span>
+            }
+          </div>
+
+          @if (expandedModules()['cases'] && !isSidebarCollapsed()) {
+            <div class="pl-2 space-y-0.5 animate-slide-in">
+              <button
+                (click)="setSubmenu('cases')"
+                class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left font-medium transition cursor-pointer"
+                [class.bg-blue-600]="activeSubmenu() === 'cases'"
+                [class.text-white]="activeSubmenu() === 'cases'"
+                [class.shadow-md]="activeSubmenu() === 'cases'"
+                [class.shadow-blue-600/30]="activeSubmenu() === 'cases'"
+                [class.text-slate-300]="activeSubmenu() !== 'cases'"
+                [class.hover:bg-slate-800/80]="activeSubmenu() !== 'cases'"
+                [class.hover:text-white]="activeSubmenu() !== 'cases'"
+              >
+                <div class="flex items-center space-x-2.5">
+                  <span class="text-xs">📑</span>
+                  <span>Mesa de Trabajo</span>
+                </div>
+                <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-slate-800 text-slate-300"
+                  [class.bg-blue-500]="activeSubmenu() === 'cases'"
+                  [class.text-white]="activeSubmenu() === 'cases'">
+                  {{ workspaceStore.tabs().length }}
+                </span>
+              </button>
+
+              <button
+                (click)="setSubmenu('cases-critical')"
+                class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left font-medium transition cursor-pointer"
+                [class.bg-blue-600]="activeSubmenu() === 'cases-critical'"
+                [class.text-white]="activeSubmenu() === 'cases-critical'"
+                [class.shadow-md]="activeSubmenu() === 'cases-critical'"
+                [class.shadow-blue-600/30]="activeSubmenu() === 'cases-critical'"
+                [class.text-slate-300]="activeSubmenu() !== 'cases-critical'"
+                [class.hover:bg-slate-800/80]="activeSubmenu() !== 'cases-critical'"
+                [class.hover:text-white]="activeSubmenu() !== 'cases-critical'"
+              >
+                <div class="flex items-center space-x-2.5">
+                  <span class="text-xs">🚨</span>
+                  <span>Casos Críticos</span>
+                </div>
+                @if (metrics().critical > 0) {
+                  <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-red-900/80 text-red-200 border border-red-700/60">
+                    {{ metrics().critical }}
+                  </span>
+                }
+              </button>
+
+              <button
+                (click)="openNewCaseModal()"
+                class="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-left font-semibold text-emerald-400 hover:bg-emerald-950/40 hover:text-emerald-300 transition cursor-pointer"
+              >
+                <span class="text-xs font-black">+</span>
+                <span>Registrar Nuevo Caso</span>
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- MÓDULO 3: CLIENTES & CONEXIONES -->
+        <div class="space-y-1">
+          <div
+            (click)="toggleModuleExpansion('clients')"
+            class="flex items-center justify-between px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 cursor-pointer text-[11px] font-bold uppercase tracking-wider transition group"
+          >
+            <div class="flex items-center space-x-2">
+              <span class="text-sm">🏢</span>
+              @if (!isSidebarCollapsed()) {
+                <span>Clientes & DBs</span>
+              }
+            </div>
+            @if (!isSidebarCollapsed()) {
+              <span class="text-[9px] text-slate-500 group-hover:text-slate-300 transition-transform duration-200"
+                [class.rotate-180]="expandedModules()['clients']">▼</span>
+            }
+          </div>
+
+          @if (expandedModules()['clients'] && !isSidebarCollapsed()) {
+            <div class="pl-2 space-y-0.5 animate-slide-in">
+              <button
+                (click)="setSubmenu('clients')"
+                class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left font-medium transition cursor-pointer"
+                [class.bg-blue-600]="activeSubmenu() === 'clients'"
+                [class.text-white]="activeSubmenu() === 'clients'"
+                [class.shadow-md]="activeSubmenu() === 'clients'"
+                [class.shadow-blue-600/30]="activeSubmenu() === 'clients'"
+                [class.text-slate-300]="activeSubmenu() !== 'clients'"
+                [class.hover:bg-slate-800/80]="activeSubmenu() !== 'clients'"
+                [class.hover:text-white]="activeSubmenu() !== 'clients'"
+              >
+                <div class="flex items-center space-x-2.5">
+                  <span class="text-xs">👥</span>
+                  <span>Directorio Clientes</span>
+                </div>
+                <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-slate-800 text-slate-300">
+                  {{ clients().length }}
+                </span>
+              </button>
+
+              <button
+                (click)="setSubmenu('connections')"
+                class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left font-medium transition cursor-pointer"
+                [class.bg-blue-600]="activeSubmenu() === 'connections'"
+                [class.text-white]="activeSubmenu() === 'connections'"
+                [class.shadow-md]="activeSubmenu() === 'connections'"
+                [class.shadow-blue-600/30]="activeSubmenu() === 'connections'"
+                [class.text-slate-300]="activeSubmenu() !== 'connections'"
+                [class.hover:bg-slate-800/80]="activeSubmenu() !== 'connections'"
+                [class.hover:text-white]="activeSubmenu() !== 'connections'"
+              >
+                <div class="flex items-center space-x-2.5">
+                  <span class="text-xs">🗄️</span>
+                  <span>Conexiones a BD</span>
+                </div>
+                <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-slate-800 text-slate-300">
+                  {{ allDbConnections.length }}
+                </span>
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- MÓDULO 4: CONFIGURACIÓN (USUARIOS, ROLES, AUDITORÍA) -->
+        <div class="space-y-1">
+          <div
+            (click)="toggleModuleExpansion('config')"
+            class="flex items-center justify-between px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 cursor-pointer text-[11px] font-bold uppercase tracking-wider transition group"
+          >
+            <div class="flex items-center space-x-2">
+              <span class="text-sm">⚙️</span>
+              @if (!isSidebarCollapsed()) {
+                <span>Configuración</span>
+              }
+            </div>
+            @if (!isSidebarCollapsed()) {
+              <span class="text-[9px] text-slate-500 group-hover:text-slate-300 transition-transform duration-200"
+                [class.rotate-180]="expandedModules()['config']">▼</span>
+            }
+          </div>
+
+          @if (expandedModules()['config'] && !isSidebarCollapsed()) {
+            <div class="pl-2 space-y-0.5 animate-slide-in">
+              <button
+                (click)="setSubmenu('users')"
+                class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left font-medium transition cursor-pointer"
+                [class.bg-blue-600]="activeSubmenu() === 'users'"
+                [class.text-white]="activeSubmenu() === 'users'"
+                [class.shadow-md]="activeSubmenu() === 'users'"
+                [class.shadow-blue-600/30]="activeSubmenu() === 'users'"
+                [class.text-slate-300]="activeSubmenu() !== 'users'"
+                [class.hover:bg-slate-800/80]="activeSubmenu() !== 'users'"
+                [class.hover:text-white]="activeSubmenu() !== 'users'"
+              >
+                <div class="flex items-center space-x-2.5">
+                  <span class="text-xs">👤</span>
+                  <span>Usuarios y Accesos</span>
+                </div>
+                <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-slate-800 text-slate-300">
+                  {{ usersList().length }}
+                </span>
+              </button>
+
+              <button
+                (click)="setSubmenu('roles')"
+                class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left font-medium transition cursor-pointer"
+                [class.bg-blue-600]="activeSubmenu() === 'roles'"
+                [class.text-white]="activeSubmenu() === 'roles'"
+                [class.shadow-md]="activeSubmenu() === 'roles'"
+                [class.shadow-blue-600/30]="activeSubmenu() === 'roles'"
+                [class.text-slate-300]="activeSubmenu() !== 'roles'"
+                [class.hover:bg-slate-800/80]="activeSubmenu() !== 'roles'"
+                [class.hover:text-white]="activeSubmenu() !== 'roles'"
+              >
+                <div class="flex items-center space-x-2.5">
+                  <span class="text-xs">🛡️</span>
+                  <span>Roles y Permisos (RBAC)</span>
+                </div>
+                <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-slate-800 text-slate-300">
+                  {{ rolesList().length }}
+                </span>
+              </button>
+
+              <button
+                (click)="setSubmenu('audit')"
+                class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left font-medium transition cursor-pointer"
+                [class.bg-blue-600]="activeSubmenu() === 'audit'"
+                [class.text-white]="activeSubmenu() === 'audit'"
+                [class.shadow-md]="activeSubmenu() === 'audit'"
+                [class.shadow-blue-600/30]="activeSubmenu() === 'audit'"
+                [class.text-slate-300]="activeSubmenu() !== 'audit'"
+                [class.hover:bg-slate-800/80]="activeSubmenu() !== 'audit'"
+                [class.hover:text-white]="activeSubmenu() !== 'audit'"
+              >
+                <div class="flex items-center space-x-2.5">
+                  <span class="text-xs">📜</span>
+                  <span>Bitácora de Auditoría</span>
+                </div>
+                <span class="text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-slate-800 text-slate-400">
+                  Log
+                </span>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- FOOTER DEL SIDEBAR: USUARIO ACTIVO Y LOGOUT -->
+      <div class="p-3 border-t border-slate-800/80 bg-slate-950/60 shrink-0">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2.5 overflow-hidden">
+            <div class="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow">
+              {{ apiService.currentUser()?.firstName?.substring(0, 2)?.toUpperCase() || 'US' }}
+            </div>
+            @if (!isSidebarCollapsed()) {
+              <div class="truncate text-left">
+                <p class="font-bold text-xs text-white leading-tight truncate">
+                  {{ apiService.currentUser()?.firstName }} {{ apiService.currentUser()?.lastName }}
+                </p>
+                <p class="text-[10px] text-emerald-400 font-semibold truncate leading-tight">
+                  {{ apiService.currentUser()?.roles?.[0] || 'Usuario' }}
+                </p>
+              </div>
+            }
+          </div>
+
+          <button
+            (click)="handleLogout()"
+            class="p-2 text-slate-400 hover:text-red-400 hover:bg-red-950/40 rounded-xl transition cursor-pointer shrink-0"
+            title="Cerrar Sesión"
+          >
+            <span>🚪</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 2. ÁREA DE CONTENIDO PRINCIPAL DERECHA -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-100">
+
+      <!-- TOPBAR SUPERIOR CON BREADCRUMB, BUSCADOR Y ESTADO -->
+      <header class="bg-white border-b border-slate-200 px-6 py-2.5 flex items-center justify-between shadow-xs shrink-0 z-20">
+        <!-- BREADCRUMB Y TOGGLE BUTTON -->
+        <div class="flex items-center space-x-3">
+          <button
+            (click)="toggleSidebar()"
+            class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
+            title="Mostrar / Ocultar panel lateral"
+          >
+            <span class="text-sm">☰</span>
+          </button>
+
+          <!-- Breadcrumb dinámico según activeSubmenu() -->
+          <div class="flex items-center space-x-2 text-xs font-semibold text-slate-500 select-none">
+            @if (activeSubmenu() === 'dashboard') {
+              <span>📊 Dashboard</span>
+              <span>/</span>
+              <span class="text-blue-600 font-bold">Panel de Control & KPIs</span>
+            } @else if (activeSubmenu() === 'cases') {
+              <span>📂 Gestión de Casos</span>
+              <span>/</span>
+              <span class="text-blue-600 font-bold">Mesa de Trabajo Multi-Caso</span>
+            } @else if (activeSubmenu() === 'cases-critical') {
+              <span>📂 Gestión de Casos</span>
+              <span>/</span>
+              <span class="text-red-600 font-bold">Casos Críticos & Prioridad Alta</span>
+            } @else if (activeSubmenu() === 'clients') {
+              <span>🏢 Clientes & DBs</span>
+              <span>/</span>
+              <span class="text-blue-600 font-bold">Directorio de Clientes</span>
+            } @else if (activeSubmenu() === 'connections') {
+              <span>🏢 Clientes & DBs</span>
+              <span>/</span>
+              <span class="text-blue-600 font-bold">Conexiones de Base de Datos</span>
+            } @else if (activeSubmenu() === 'users') {
+              <span>⚙️ Configuración</span>
+              <span>/</span>
+              <span class="text-blue-600 font-bold">Gestión de Usuarios y Accesos</span>
+            } @else if (activeSubmenu() === 'roles') {
+              <span>⚙️ Configuración</span>
+              <span>/</span>
+              <span class="text-blue-600 font-bold">Roles y Matriz de Permisos (RBAC)</span>
+            } @else if (activeSubmenu() === 'audit') {
+              <span>⚙️ Configuración</span>
+              <span>/</span>
+              <span class="text-blue-600 font-bold">Bitácora de Auditoría</span>
+            }
+          </div>
+        </div>
+
+        <!-- BUSCADOR RÁPIDO GLOBAL -->
+        <div class="flex-1 max-w-md mx-6 hidden sm:block">
+          <div class="relative">
+            <input
+              type="text"
+              placeholder="Buscar por código de caso (00226), cliente o SP..."
+              [(ngModel)]="searchQuery"
+              class="w-full bg-slate-50 text-xs text-slate-800 placeholder-slate-400 rounded-xl pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 border border-slate-200 transition"
+            />
+            <span class="absolute left-2.5 top-2 text-slate-400 text-xs">🔍</span>
+          </div>
+        </div>
+
+        <!-- ACCIONES RÁPIDAS Y ESTADO DE DB -->
+        <div class="flex items-center space-x-3">
+          <!-- Indicador de Sonda DB activa -->
+          <div
+            (click)="testDbConnection()"
+            class="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold cursor-pointer hover:bg-blue-50 transition"
+            title="Haga clic para validar latencia con el servidor cliente"
+          >
+            <span class="w-2 h-2 rounded-full"
+              [class.bg-emerald-500]="dbConnectionStatus() === 'success'"
+              [class.bg-amber-500]="dbConnectionStatus() === 'testing'"
+              [class.animate-pulse]="dbConnectionStatus() === 'testing'"></span>
+            <span class="text-[11px]">Mutual Ser · SQL Server ({{ dbLatencyMs() }}ms)</span>
+          </div>
+
+          <!-- Botón + Nuevo Caso -->
+          <button
+            (click)="openNewCaseModal()"
+            class="bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-bold px-3 py-1.5 rounded-xl flex items-center space-x-1 shadow-md shadow-blue-600/20 transition cursor-pointer"
+          >
+            <span class="text-sm font-black">+</span>
+            <span>Nuevo Caso</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- VISTA CONDICIONAL SEGÚN activeSubmenu() -->
+      @if (activeSubmenu() === 'cases' || activeSubmenu() === 'cases-critical') {
+        <!-- MULTI-CASE TABS BAR WITH SMOOTH TAB TRANSITIONS -->
+        <nav class="bg-slate-200/90 border-b border-slate-300 flex items-center px-4 pt-1.5 overflow-x-auto space-x-1 custom-scrollbar shrink-0 shadow-inner">
+        @for (tab of workspaceStore.tabs(); track tab.id) {
+          <div
+            (click)="workspaceStore.setActiveTab(tab.id)"
+            class="group flex items-center space-x-2 px-3 py-2 rounded-t-lg cursor-pointer text-xs font-medium border-t-2 tab-transition select-none"
+            [class.bg-white]="workspaceStore.activeTabId() === tab.id"
+            [class.border-blue-600]="workspaceStore.activeTabId() === tab.id"
+            [class.text-blue-900]="workspaceStore.activeTabId() === tab.id"
+            [class.shadow-sm]="workspaceStore.activeTabId() === tab.id"
+            [class.-translate-y-0.5]="workspaceStore.activeTabId() === tab.id"
+            [class.bg-slate-300/80]="workspaceStore.activeTabId() !== tab.id"
+            [class.border-transparent]="workspaceStore.activeTabId() !== tab.id"
+            [class.text-slate-600]="workspaceStore.activeTabId() !== tab.id"
+            [class.hover:bg-slate-200]="workspaceStore.activeTabId() !== tab.id"
+            [class.hover:text-slate-800]="workspaceStore.activeTabId() !== tab.id"
+          >
+            <span class="transition-transform group-hover:scale-110">{{ tab.type === 'dashboard' ? '📊' : '📂' }}</span>
+            <div class="text-left">
+              <span class="font-bold">{{ tab.title }}</span>
+              @if (tab.subtitle) {
+                <span class="text-[10px] text-slate-500 ml-1.5 hidden md:inline truncate max-w-[120px]">
+                  {{ tab.subtitle }}
+                </span>
+              }
+            </div>
+            @if (tab.id !== 'dashboard') {
+              <button
+                (click)="workspaceStore.closeTab(tab.id, $event)"
+                class="text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full w-4 h-4 flex items-center justify-center ml-1 transition-colors duration-150"
+                title="Cerrar pestaña"
+              >
+                ✕
+              </button>
+            }
+          </div>
+        }
+      </nav>
+
+      <!-- MAIN WORKSPACE CONTENT CONTAINER -->
+      <main class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+        <!-- VIEW 1: DASHBOARD -->
+        @if (workspaceStore.activeTabId() === 'dashboard') {
+          <div class="max-w-7xl mx-auto space-y-6 animate-fade-in">
+            <!-- KPI METRICS -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
+                <div>
+                  <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Casos Abiertos</p>
+                  <h3 class="text-2xl font-black text-slate-900 mt-1">{{ metrics().openCases }}</h3>
+                  <p class="text-[11px] text-emerald-600 font-medium mt-1">↑ En base PostgreSQL</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                  📂
+                </div>
+              </div>
+
+              <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
+                <div>
+                  <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">En Análisis Técnico</p>
+                  <h3 class="text-2xl font-black text-amber-600 mt-1">{{ metrics().analyzing }}</h3>
+                  <p class="text-[11px] text-slate-500 font-medium mt-1">Diagnóstico en curso</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                  🔬
+                </div>
+              </div>
+
+              <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
+                <div>
+                  <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">En Desarrollo</p>
+                  <h3 class="text-2xl font-black text-indigo-600 mt-1">{{ metrics().inDevelopment }}</h3>
+                  <p class="text-[11px] text-slate-500 font-medium mt-1">Scripts y correcciones</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                  🛠️
+                </div>
+              </div>
+
+              <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default">
+                <div>
+                  <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Críticos o en Riesgo</p>
+                  <h3 class="text-2xl font-black text-red-600 mt-1">{{ metrics().critical }}</h3>
+                  <p class="text-[11px] text-red-600 font-medium mt-1">Prioridad Alta / Crítica</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-xl">
+                  ⚠️
+                </div>
+              </div>
+            </div>
+
+            <!-- RECENT CASES TABLE -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-shadow hover:shadow">
+              <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+                <div>
+                  <h2 class="text-base font-bold text-slate-900">Casos Técnicos Recientes</h2>
+                  <p class="text-xs text-slate-500">Haz clic en cualquier caso para abrirlo en su pestaña de trabajo dedicada.</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <button (click)="openNewCaseModal()" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold text-xs hover:bg-blue-500 transition cursor-pointer">
+                    + Registrar Caso
+                  </button>
+                </div>
+              </div>
+
+              <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                  <tr>
+                    <th class="px-4 py-3">Código</th>
+                    <th class="px-4 py-3">Cliente</th>
+                    <th class="px-4 py-3">Sistema / Módulo</th>
+                    <th class="px-4 py-3">Título del Incidente</th>
+                    <th class="px-4 py-3">Prioridad</th>
+                    <th class="px-4 py-3">Estado</th>
+                    <th class="px-4 py-3 text-right">Acción</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr
+                    (click)="workspaceStore.openTab({ id: 'case-00226', title: 'CASO-00226', subtitle: 'Mutual Ser - Descuadre FT003', type: 'case' })"
+                    class="hover:bg-blue-50/70 cursor-pointer transition-all duration-150 group"
+                  >
+                    <td class="px-4 py-3 font-mono font-bold text-blue-600 group-hover:underline">CASO-00226</td>
+                    <td class="px-4 py-3 font-semibold text-slate-800">Mutual Ser EPS / Fiduciaria La Previsora</td>
+                    <td class="px-4 py-3">
+                      <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-semibold">Contabilidad</span>
+                      <span class="text-slate-400 text-[11px] ml-1">Circular 016</span>
+                    </td>
+                    <td class="px-4 py-3 font-medium text-slate-900">Descuadre de -$198M entre Reporte FT003 y Anexo de Balance CXC</td>
+                    <td class="px-4 py-3">
+                      <span class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-bold">ALTA</span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">ANALIZANDO</span>
+                    </td>
+                    <td class="px-4 py-3 text-right font-semibold text-blue-600 group-hover:translate-x-1 transition-transform">Abrir ➔</td>
+                  </tr>
+
+                  <tr
+                    (click)="workspaceStore.openTab({ id: 'case-00130', title: 'CASO-00130', subtitle: 'SOMEDYT - Cierre 2024 vs 2025', type: 'case' })"
+                    class="hover:bg-blue-50/70 cursor-pointer transition-all duration-150 group"
+                  >
+                    <td class="px-4 py-3 font-mono font-bold text-blue-600 group-hover:underline">CASO-00130</td>
+                    <td class="px-4 py-3 font-semibold text-slate-800">SOMEDYT S.A.S.</td>
+                    <td class="px-4 py-3">
+                      <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-semibold">Contabilidad</span>
+                      <span class="text-slate-400 text-[11px] ml-1">Cierre Anual</span>
+                    </td>
+                    <td class="px-4 py-3 font-medium text-slate-900">Descuadre de -$3.287M en saldos iniciales 2025 por arrastre de anulados</td>
+                    <td class="px-4 py-3">
+                      <span class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-bold">CRÍTICA</span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">SOLUCIONADO</span>
+                    </td>
+                    <td class="px-4 py-3 text-right font-semibold text-blue-600 group-hover:translate-x-1 transition-transform">Abrir ➔</td>
+                  </tr>
+
+                  <tr
+                    (click)="workspaceStore.openTab({ id: 'case-18253', title: 'CASO-18253', subtitle: 'Entrada EM002475 - Costos', type: 'case' })"
+                    class="hover:bg-blue-50/70 cursor-pointer transition-all duration-150 group"
+                  >
+                    <td class="px-4 py-3 font-mono font-bold text-blue-600 group-hover:underline">CASO-18253</td>
+                    <td class="px-4 py-3 font-semibold text-slate-800">Cliente Hospital Regional</td>
+                    <td class="px-4 py-3">
+                      <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-semibold">Inventario</span>
+                      <span class="text-slate-400 text-[11px] ml-1">Entrada Mercancía</span>
+                    </td>
+                    <td class="px-4 py-3 font-medium text-slate-900">Bloqueo al anular entrada por redondeo de centavos en costo unitario</td>
+                    <td class="px-4 py-3">
+                      <span class="px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 text-[10px] font-bold">MEDIA</span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-bold">EN DESARROLLO</span>
+                    </td>
+                    <td class="px-4 py-3 text-right font-semibold text-blue-600 group-hover:translate-x-1 transition-transform">Abrir ➔</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+
+        <!-- VIEW 2: DUAL-ZONE CASE WORKSPACE -->
+        @for (activeCase of [workspaceStore.activeCase()]; track activeCase?.code) {
+          @if (activeCase) {
+            <div class="h-full flex flex-col space-y-3 animate-fade-in" [attr.data-case-code]="activeCase.code">
+              <!-- CASE HEADER BANNER -->
+              <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3 transition-all">
+                <div class="flex items-center space-x-3">
+                  <span class="font-mono text-lg font-black text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 shadow-sm">
+                    {{ activeCase.code }}
+                  </span>
+                  <div>
+                    <h1 class="text-base font-bold text-slate-900 leading-tight">
+                      {{ activeCase.title }}
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                      Cliente: <strong class="text-slate-700">{{ activeCase.client }}</strong> • Sistema: <span class="text-blue-600 font-semibold">{{ activeCase.system }}</span> ({{ activeCase.module }}) • Creado el {{ activeCase.createdDate }}
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                  <div class="flex items-center space-x-1.5 text-xs">
+                    <span class="text-slate-500 font-medium">Prioridad:</span>
+                    <span class="px-2 py-0.5 rounded-full font-bold text-[11px] shadow-sm" [class]="activeCase.priorityColor">
+                      {{ activeCase.priority }}
+                    </span>
+                  </div>
+
+                  <div class="flex items-center space-x-1.5 text-xs">
+                    <span class="text-slate-500 font-medium">Estado:</span>
+                    <select class="font-bold text-xs rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 transition cursor-pointer shadow-sm border" [class]="activeCase.statusColor">
+                      <option [selected]="activeCase.status === 'REGISTRADO'">REGISTRADO</option>
+                      <option [selected]="activeCase.status === 'PENDIENTE DE ANÁLISIS'">PENDIENTE DE ANÁLISIS</option>
+                      <option [selected]="activeCase.status === 'ANALIZANDO'">ANALIZANDO</option>
+                      <option [selected]="activeCase.status === 'GENERANDO ANÁLISIS'">GENERANDO ANÁLISIS</option>
+                      <option [selected]="activeCase.status === 'EN DESARROLLO'">EN DESARROLLO</option>
+                      <option [selected]="activeCase.status === 'EN PRUEBAS'">EN PRUEBAS</option>
+                      <option [selected]="activeCase.status === 'SOLUCIONADO'">SOLUCIONADO</option>
+                      <option [selected]="activeCase.status === 'CERRADO'">CERRADO</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- DUAL-ZONE WORKSPACE SPLIT (Left: 35%, Right: 65%) -->
+              <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 min-h-[580px]">
+                <!-- LEFT PANEL: METADATA, DB CONNECTION & ATTACHMENTS (4 cols / ~33%) -->
+                <div class="lg:col-span-4 flex flex-col space-y-3">
+                  <!-- SECURE DB CONNECTION CARD -->
+                  <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 text-xs transition-shadow hover:shadow">
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                      <div class="flex items-center space-x-1.5">
+                        <span class="text-base">🔌</span>
+                        <span class="font-bold text-slate-800">Conexión a BD del Cliente</span>
+                      </div>
+                      <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px] tracking-wide">
+                        SOLO LECTURA
+                      </span>
+                    </div>
+
+                    <div class="mt-2.5 space-y-1.5 text-slate-600">
+                      <p><strong class="text-slate-700">Motor:</strong> {{ activeCase.dbConnection.engine }}</p>
+                      <p><strong class="text-slate-700">Servidor:</strong> {{ activeCase.dbConnection.server }}</p>
+                      <p><strong class="text-slate-700">Base de Datos:</strong> {{ activeCase.dbConnection.database }}</p>
+                      <p><strong class="text-slate-700">Ambiente:</strong> {{ activeCase.dbConnection.env }}</p>
+                    </div>
+
+                    <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                      <button
+                        (click)="testDbConnection()"
+                        class="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 px-2.5 py-1 rounded text-[11px] font-semibold border border-slate-300 transition flex items-center space-x-1 cursor-pointer"
+                      >
+                        <span>⚡ Probar Conexión</span>
+                      </button>
+
+                      @if (dbConnectionStatus() === 'testing') {
+                        <span class="text-amber-600 font-semibold text-[11px] animate-pulse flex items-center space-x-1">
+                          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                          <span>Probando sonda...</span>
+                        </span>
+                      } @else if (dbConnectionStatus() === 'success') {
+                        <span class="text-emerald-700 font-bold text-[11px] flex items-center space-x-1 animate-fade-in">
+                          <span>🟢 Conectado</span>
+                          <span class="text-slate-400 font-normal">({{ activeCase.dbConnection.latency }}ms)</span>
+                        </span>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- ATTACHMENTS & EVIDENCES CARD -->
+                  <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 text-xs flex-1 flex flex-col transition-shadow hover:shadow">
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                      <div class="flex items-center space-x-1.5">
+                        <span class="text-base">📎</span>
+                        <span class="font-bold text-slate-800">Evidencias y Adjuntos ({{ activeCase.attachments.length }})</span>
+                      </div>
+                      <button class="text-blue-600 hover:text-blue-800 font-bold text-[11px] cursor-pointer transition">+ Adjuntar</button>
+                    </div>
+
+                    <div class="mt-2.5 space-y-2 flex-1 overflow-y-auto custom-scrollbar">
+                      @for (att of activeCase.attachments; track att.name) {
+                        <div class="p-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between hover:bg-blue-50/60 hover:border-blue-200 transition cursor-pointer">
+                          <div class="flex items-center space-x-2">
+                            <span class="text-green-600 font-bold text-sm">{{ att.icon }}</span>
+                            <div>
+                              <p class="font-semibold text-slate-800 truncate max-w-[200px]">{{ att.name }}</p>
+                              <p class="text-[10px] text-slate-400">{{ att.size }} • {{ att.uploader }}</p>
+                            </div>
+                          </div>
+                          <button class="text-slate-400 hover:text-blue-600 p-1 transition" title="Descargar seguro">⬇</button>
+                        </div>
+                      } @empty {
+                        <div class="p-3 text-center text-slate-400 text-xs">
+                          No hay archivos adjuntos en este caso.
+                        </div>
+                      }
+
+                      <!-- Drag & Drop Zone -->
+                      <div class="border-2 border-dashed border-slate-300 rounded-lg p-3 text-center text-slate-400 hover:border-blue-400 hover:bg-blue-50/40 cursor-pointer transition mt-2">
+                        <p class="text-[11px] font-semibold text-slate-600">Arrastra archivos aquí para adjuntar</p>
+                        <p class="text-[10px] text-slate-400">SQL, XLSX, PDF, PNG, LOG (máx. 50MB)</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- TIMELINE EVENT STREAM -->
+                  <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 text-xs transition-shadow hover:shadow">
+                    <h3 class="font-bold text-slate-800 pb-2 border-b border-slate-100 mb-2">⏱️ Actividad del Caso</h3>
+                    <div class="space-y-2 text-[11px]">
+                      @for (event of activeCase.timeline; track event.title + event.time) {
+                        <div class="flex items-start space-x-2">
+                          <div class="w-2 h-2 rounded-full mt-1" [class]="event.color"></div>
+                          <div>
+                            <p class="text-slate-700 font-semibold">{{ event.title }}</p>
+                            <p class="text-[10px] text-slate-400">{{ event.time }}</p>
+                          </div>
+                        </div>
+                      } @empty {
+                        <p class="text-slate-400 text-[10px]">Sin eventos recientes.</p>
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                <!-- RIGHT PANEL: TECHNICAL ANALYSIS & SOLUTION WORKSPACE (8 cols / ~67%) -->
+                <div class="lg:col-span-8 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden transition-shadow hover:shadow">
+                  <!-- SUB-TABS NAVIGATION -->
+                  <div class="flex items-center justify-between px-4 border-b border-slate-200 bg-slate-50/70">
+                    <div class="flex space-x-2">
+                      <button
+                        (click)="setSubTab('analysis')"
+                        class="py-3 px-3.5 text-xs font-bold border-b-2 flex items-center space-x-1.5 tab-transition cursor-pointer"
+                        [class.border-blue-600]="caseDetailSubTab() === 'analysis'"
+                        [class.text-blue-700]="caseDetailSubTab() === 'analysis'"
+                        [class.bg-white]="caseDetailSubTab() === 'analysis'"
+                        [class.shadow-sm]="caseDetailSubTab() === 'analysis'"
+                        [class.border-transparent]="caseDetailSubTab() !== 'analysis'"
+                        [class.text-slate-500]="caseDetailSubTab() !== 'analysis'"
+                      >
+                        <span>🔬</span>
+                        <span>Análisis Técnico Interno</span>
+                        <span class="px-1.5 py-0.2 rounded bg-slate-200 text-slate-700 text-[10px] font-semibold">Privado</span>
+                      </button>
+
+                      <button
+                        (click)="setSubTab('solution')"
+                        class="py-3 px-3.5 text-xs font-bold border-b-2 flex items-center space-x-1.5 tab-transition cursor-pointer"
+                        [class.border-blue-600]="caseDetailSubTab() === 'solution'"
+                        [class.text-blue-700]="caseDetailSubTab() === 'solution'"
+                        [class.bg-white]="caseDetailSubTab() === 'solution'"
+                        [class.shadow-sm]="caseDetailSubTab() === 'solution'"
+                        [class.border-transparent]="caseDetailSubTab() !== 'solution'"
+                        [class.text-slate-500]="caseDetailSubTab() !== 'solution'"
+                      >
+                        <span>🛠️</span>
+                        <span>Solución y Scripts</span>
+                      </button>
+
+                      <button
+                        (click)="setSubTab('clientResponse')"
+                        class="py-3 px-3.5 text-xs font-bold border-b-2 flex items-center space-x-1.5 tab-transition cursor-pointer"
+                        [class.border-blue-600]="caseDetailSubTab() === 'clientResponse'"
+                        [class.text-blue-700]="caseDetailSubTab() === 'clientResponse'"
+                        [class.bg-white]="caseDetailSubTab() === 'clientResponse'"
+                        [class.shadow-sm]="caseDetailSubTab() === 'clientResponse'"
+                        [class.border-transparent]="caseDetailSubTab() !== 'clientResponse'"
+                        [class.text-slate-500]="caseDetailSubTab() !== 'clientResponse'"
+                      >
+                        <span>💬</span>
+                        <span>Respuesta para el Cliente</span>
+                        <span class="px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 text-[10px] font-semibold">Borrador</span>
+                      </button>
+                    </div>
+
+                    <div class="text-[11px] text-slate-400">
+                      Último guardado: <span class="font-medium text-slate-600">Hace 2 min</span>
+                    </div>
+                  </div>
+
+                  <!-- SUB-TAB 1: ANÁLISIS TÉCNICO INTERNO -->
+                  @if (caseDetailSubTab() === 'analysis') {
+                    <div class="p-4 flex-1 overflow-y-auto space-y-4 custom-scrollbar text-xs animate-slide-in">
+                      <div>
+                        <label class="block font-bold text-slate-800 mb-1 text-xs">
+                          Causa Raíz o Hipótesis Diagnóstica:
+                        </label>
+                        <textarea
+                          rows="3"
+                          class="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 transition-shadow focus:outline-none"
+                          placeholder="Describe las causas identificadas..."
+                        >{{ activeCase.analysis.rootCause }}</textarea>
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-3">
+                        <div>
+                          <label class="block font-bold text-slate-700 mb-1 text-[11px]">Procedimientos / Vistas Involucrados:</label>
+                          <input
+                            type="text"
+                            class="w-full p-2 rounded-lg border border-slate-300 text-xs font-mono bg-slate-50"
+                            [value]="activeCase.analysis.procedures"
+                          />
+                        </div>
+                        <div>
+                          <label class="block font-bold text-slate-700 mb-1 text-[11px]">Tablas Afectadas:</label>
+                          <input
+                            type="text"
+                            class="w-full p-2 rounded-lg border border-slate-300 text-xs font-mono bg-slate-50"
+                            [value]="activeCase.analysis.tables"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div class="flex items-center justify-between mb-1">
+                          <label class="font-bold text-slate-800 text-xs">Consultas SQL de Diagnóstico Ejecutadas:</label>
+                          <span class="text-[10px] text-blue-600 font-semibold cursor-pointer hover:underline">Copiar consulta</span>
+                        </div>
+                        <pre class="bg-slate-900 text-emerald-400 font-mono text-[11px] p-3 rounded-lg overflow-x-auto leading-relaxed border border-slate-800 shadow-inner">{{ activeCase.analysis.sqlQuery }}</pre>
+                      </div>
+
+                      <div class="pt-3 border-t border-slate-200 flex justify-end space-x-2">
+                        <button
+                          (click)="saveDraftToast()"
+                          class="px-3.5 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 active:scale-95 font-semibold text-slate-700 text-xs transition cursor-pointer"
+                        >
+                          Guardar Borrador
+                        </button>
+                        <button class="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 font-semibold text-white text-xs shadow-md shadow-blue-500/20 transition cursor-pointer">
+                          Pasar a En Desarrollo ➔
+                        </button>
+                      </div>
+                    </div>
+                  }
+
+                  <!-- SUB-TAB 2: SOLUCIÓN Y SCRIPTS -->
+                  @if (caseDetailSubTab() === 'solution') {
+                    <div class="p-4 flex-1 overflow-y-auto space-y-4 custom-scrollbar text-xs animate-slide-in">
+                      <div>
+                        <label class="block font-bold text-slate-800 mb-1 text-xs">Resumen de la Solución:</label>
+                        <textarea
+                          rows="3"
+                          class="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 focus:outline-none transition"
+                          placeholder="Explicación técnica de los cambios realizados..."
+                        >{{ activeCase.solution.summary }}</textarea>
+                      </div>
+
+                      <div>
+                        <label class="block font-bold text-slate-800 mb-1 text-xs">Script SQL de Solución / Corrección:</label>
+                        <pre class="bg-slate-900 text-blue-300 font-mono text-[11px] p-3 rounded-lg overflow-x-auto border border-slate-800 shadow-inner">{{ activeCase.solution.sqlScript }}</pre>
+                      </div>
+
+                      <div>
+                        <label class="block font-bold text-slate-800 mb-1 text-xs">Procedimiento de Reversión (Rollback):</label>
+                        <textarea
+                          rows="2"
+                          class="w-full p-2 rounded-lg border border-slate-300 text-xs text-slate-800 font-mono bg-slate-50"
+                          [value]="activeCase.solution.rollback"
+                        ></textarea>
+                      </div>
+
+                      <div class="pt-3 border-t border-slate-200 flex justify-end space-x-2">
+                        <button
+                          (click)="saveDraftToast()"
+                          class="px-3.5 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 active:scale-95 font-semibold text-slate-700 text-xs transition cursor-pointer"
+                        >
+                          Guardar Solución
+                        </button>
+                      </div>
+                    </div>
+                  }
+
+                  <!-- SUB-TAB 3: RESPUESTA PARA EL CLIENTE -->
+                  @if (caseDetailSubTab() === 'clientResponse') {
+                    <div class="p-4 flex-1 overflow-y-auto space-y-4 custom-scrollbar text-xs animate-slide-in">
+                      <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-amber-900 text-xs shadow-sm">
+                        <strong>⚠️ Modo Borrador:</strong> Esta respuesta no es visible para el cliente hasta que un usuario autorizado la publique.
+                      </div>
+
+                      <div>
+                        <label class="block font-bold text-slate-800 mb-1 text-xs">Resumen del Inconveniente (Explicación No Técnica):</label>
+                        <textarea
+                          rows="2"
+                          class="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 focus:outline-none transition"
+                        >{{ activeCase.clientResponse.summary }}</textarea>
+                      </div>
+
+                      <div>
+                        <label class="block font-bold text-slate-800 mb-1 text-xs">Causa Identificada:</label>
+                        <textarea
+                          rows="2"
+                          class="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 focus:outline-none transition"
+                        >{{ activeCase.clientResponse.cause }}</textarea>
+                      </div>
+
+                      <div>
+                        <label class="block font-bold text-slate-800 mb-1 text-xs">Acciones Realizadas y Recomendaciones:</label>
+                        <textarea
+                          rows="2"
+                          class="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 focus:outline-none transition"
+                        >{{ activeCase.clientResponse.actions }}</textarea>
+                      </div>
+
+                      <div class="pt-3 border-t border-slate-200 flex justify-end space-x-2">
+                        <button
+                          (click)="saveDraftToast()"
+                          class="px-3.5 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 active:scale-95 font-semibold text-slate-700 text-xs transition cursor-pointer"
+                        >
+                          Guardar Borrador
+                        </button>
+                        <button
+                          (click)="publishResponseToast()"
+                          class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 font-semibold text-white text-xs shadow-md shadow-emerald-500/20 transition cursor-pointer"
+                        >
+                          📢 Publicar Respuesta al Cliente
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        }
+      </main>
+    }
+
+    <!-- VISTA 2: DASHBOARD / PANEL DE CONTROL -->
+    @else if (activeSubmenu() === 'dashboard') {
+      <main class="flex-1 overflow-y-auto p-6 custom-scrollbar animate-fade-in">
+        <div class="max-w-7xl mx-auto space-y-6">
+          <!-- DASHBOARD HEADER -->
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-xl font-black text-slate-900 tracking-tight">Panel de Control & Métricas</h1>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Visión ejecutiva en tiempo real del estado de casos técnicos, carga operativa y estado de bases de datos.
+              </p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button
+                (click)="refreshMetrics()"
+                class="px-3.5 py-1.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-semibold shadow-xs transition cursor-pointer"
+              >
+                🔄 Actualizar
+              </button>
+              <button
+                (click)="openNewCaseModal()"
+                class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 transition cursor-pointer"
+              >
+                + Nuevo Caso
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI STAT CARDS -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-lg">📂</div>
+              <div>
+                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Casos</p>
+                <p class="text-2xl font-black text-slate-900 leading-tight">{{ metrics().totalCases }}</p>
+              </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-lg">🔬</div>
+              <div>
+                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">En Análisis</p>
+                <p class="text-2xl font-black text-slate-900 leading-tight">{{ metrics().analyzing }}</p>
+              </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-lg">💻</div>
+              <div>
+                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">En Desarrollo</p>
+                <p class="text-2xl font-black text-slate-900 leading-tight">{{ metrics().inDevelopment }}</p>
+              </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border border-red-200/80 shadow-xs flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold text-lg">🚨</div>
+              <div>
+                <p class="text-[11px] font-bold text-red-600 uppercase tracking-wider">Casos Críticos</p>
+                <p class="text-2xl font-black text-red-700 leading-tight">{{ metrics().critical }}</p>
+              </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border border-emerald-200/80 shadow-xs flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg">✅</div>
+              <div>
+                <p class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Solucionados</p>
+                <p class="text-2xl font-black text-emerald-700 leading-tight">{{ metrics().solved }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- DISTRIBUTION CARDS -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Card 1: Distribución por Sistema -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+              <h3 class="font-bold text-sm text-slate-900 mb-4 flex items-center space-x-2">
+                <span>📊</span>
+                <span>Distribución por Sistema / Módulo</span>
+              </h3>
+              <div class="space-y-3 text-xs">
+                <div>
+                  <div class="flex justify-between font-semibold mb-1">
+                    <span class="text-slate-700">Contabilidad (Circular 016, Balances, Terceros)</span>
+                    <span class="text-blue-600 font-bold">1 Caso (50%)</span>
+                  </div>
+                  <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                    <div class="bg-blue-600 h-full rounded-full" style="width: 50%"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between font-semibold mb-1">
+                    <span class="text-slate-700">Inventario (Kardex, Entradas, Traslados)</span>
+                    <span class="text-emerald-600 font-bold">1 Caso (50%)</span>
+                  </div>
+                  <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                    <div class="bg-emerald-500 h-full rounded-full" style="width: 50%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: Estado de Servidores de Base de Datos -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+              <h3 class="font-bold text-sm text-slate-900 mb-4 flex items-center space-x-2">
+                <span>🗄️</span>
+                <span>Infraestructura de Bases de Datos Clientes</span>
+              </h3>
+              <div class="space-y-2.5 text-xs">
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <div>
+                      <p class="font-bold text-slate-900">Mutual Ser EPS</p>
+                      <p class="text-[11px] text-slate-500 font-mono">192.168.10.50:1433 · SQL Server (SismaSaludContable)</p>
+                    </div>
+                  </div>
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                    14ms · Solo Lectura
+                  </span>
+                </div>
+
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <div>
+                      <p class="font-bold text-slate-900">SOMEDYT S.A.S.</p>
+                      <p class="text-[11px] text-slate-500 font-mono">10.0.0.12:1433 · SQL Server (SismaInventario)</p>
+                    </div>
+                  </div>
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                    18ms · Solo Lectura
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RECENT CASES PREVIEW -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <h3 class="font-bold text-xs uppercase tracking-wider text-slate-700">Casos Registrados en la Plataforma</h3>
+              <button
+                (click)="setSubmenu('cases')"
+                class="text-xs text-blue-600 hover:underline font-bold cursor-pointer"
+              >
+                Ir a Mesa de Trabajo ➔
+              </button>
+            </div>
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                <tr>
+                  <th class="px-5 py-3">Código</th>
+                  <th class="px-5 py-3">Título</th>
+                  <th class="px-5 py-3">Cliente</th>
+                  <th class="px-5 py-3">Sistema</th>
+                  <th class="px-5 py-3">Prioridad</th>
+                  <th class="px-5 py-3">Estado</th>
+                  <th class="px-5 py-3 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr class="hover:bg-slate-50/70 transition">
+                  <td class="px-5 py-3.5 font-bold font-mono text-blue-600">CASO-00226</td>
+                  <td class="px-5 py-3.5 font-semibold text-slate-900">Diferencia de saldos en Circular 016</td>
+                  <td class="px-5 py-3.5 text-slate-600">Mutual Ser EPS</td>
+                  <td class="px-5 py-3.5"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-bold text-[10px]">Contabilidad</span></td>
+                  <td class="px-5 py-3.5"><span class="px-2 py-0.5 rounded-full bg-red-100 text-red-800 font-bold text-[10px]">CRÍTICA</span></td>
+                  <td class="px-5 py-3.5"><span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-bold text-[10px]">ANALIZANDO</span></td>
+                  <td class="px-5 py-3.5 text-right">
+                    <button
+                      (click)="setSubmenu('cases')"
+                      class="px-3 py-1 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 font-bold text-[11px] rounded-lg transition cursor-pointer"
+                    >
+                      Abrir
+                    </button>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-50/70 transition">
+                  <td class="px-5 py-3.5 font-bold font-mono text-blue-600">CASO-00130</td>
+                  <td class="px-5 py-3.5 font-semibold text-slate-900">Error al anular entrada de almacén</td>
+                  <td class="px-5 py-3.5 text-slate-600">SOMEDYT S.A.S.</td>
+                  <td class="px-5 py-3.5"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">Inventario</span></td>
+                  <td class="px-5 py-3.5"><span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]">ALTA</span></td>
+                  <td class="px-5 py-3.5"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">SOLUCIONADO</span></td>
+                  <td class="px-5 py-3.5 text-right">
+                    <button
+                      (click)="setSubmenu('cases')"
+                      class="px-3 py-1 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 font-bold text-[11px] rounded-lg transition cursor-pointer"
+                    >
+                      Abrir
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    }
+
+    <!-- VISTA 3: CLIENTES -->
+    @else if (activeSubmenu() === 'clients') {
+      <main class="flex-1 overflow-y-auto p-6 custom-scrollbar animate-fade-in">
+        <div class="max-w-7xl mx-auto space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-xl font-black text-slate-900 tracking-tight">Directorio de Clientes</h1>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Administra las instituciones y clientes con soporte técnico activo y conexiones asociadas.
+              </p>
+            </div>
+            <button
+              (click)="openNewClientModal()"
+              class="px-4 py-2 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-500/20 flex items-center space-x-1.5 transition cursor-pointer"
+            >
+              <span>+</span>
+              <span>Nuevo Cliente</span>
+            </button>
+          </div>
+
+          <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                <tr>
+                  <th class="px-5 py-3.5">Código</th>
+                  <th class="px-5 py-3.5">Razón Social</th>
+                  <th class="px-5 py-3.5">Identificación / NIT</th>
+                  <th class="px-5 py-3.5">Contacto Principal</th>
+                  <th class="px-5 py-3.5">Conexiones DB</th>
+                  <th class="px-5 py-3.5">Estado</th>
+                  <th class="px-5 py-3.5 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                @for (c of clients(); track c.id) {
+                  <tr class="hover:bg-slate-50/70 transition">
+                    <td class="px-5 py-3.5 font-bold font-mono text-slate-900">{{ c.code }}</td>
+                    <td class="px-5 py-3.5 font-semibold text-slate-900">{{ c.businessName }}</td>
+                    <td class="px-5 py-3.5 font-mono text-slate-500">{{ c.taxId || 'N/A' }}</td>
+                    <td class="px-5 py-3.5 text-slate-600">
+                      <div>{{ c.contactName || 'No asignado' }}</div>
+                      <div class="text-[10px] text-slate-400 font-mono">{{ c.contactEmail || '' }}</div>
+                    </td>
+                    <td class="px-5 py-3.5">
+                      <span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold text-[10px] border border-blue-200">
+                        {{ c.dbConnections?.length || 0 }} conexiones
+                      </span>
+                    </td>
+                    <td class="px-5 py-3.5">
+                      @if (c.isActive !== false) {
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] inline-flex items-center space-x-1">
+                          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          <span>Activo</span>
+                        </span>
+                      } @else {
+                        <span class="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-bold text-[10px] inline-flex items-center space-x-1">
+                          <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                          <span>Inactivo</span>
+                        </span>
+                      }
+                    </td>
+                    <td class="px-5 py-3.5 text-right space-x-1.5">
+                      <button
+                        (click)="openCreateConnectionModal(c.id)"
+                        class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition cursor-pointer"
+                        title="Agregar conexión de BD a este cliente"
+                      >
+                        + Conexión BD
+                      </button>
+                      <button
+                        (click)="toggleClientActiveStatus(c)"
+                        class="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer"
+                        [class.border-red-200]="c.isActive !== false"
+                        [class.text-red-700]="c.isActive !== false"
+                        [class.border-emerald-200]="c.isActive === false"
+                        [class.text-emerald-700]="c.isActive === false"
+                      >
+                        {{ c.isActive !== false ? 'Desactivar' : 'Activar' }}
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    }
+
+    <!-- VISTA 4: CONEXIONES A BASES DE DATOS -->
+    @else if (activeSubmenu() === 'connections') {
+      <main class="flex-1 overflow-y-auto p-6 custom-scrollbar animate-fade-in">
+        <div class="max-w-7xl mx-auto space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-xl font-black text-slate-900 tracking-tight">Conexiones a Bases de Datos</h1>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Configuración de acceso seguro a servidores de clientes con credenciales cifradas (AES-256-GCM) y modo Solo Lectura.
+              </p>
+            </div>
+            <div class="flex items-center space-x-3">
+              <div class="hidden sm:flex p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-xs items-center space-x-2">
+                <span>🔒</span>
+                <span class="font-semibold">Cifrado AES-256 Activo</span>
+              </div>
+              <button
+                (click)="openCreateConnectionModal()"
+                class="px-4 py-2 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-500/20 flex items-center space-x-1.5 transition cursor-pointer"
+              >
+                <span>+</span>
+                <span>Nueva Conexión</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                <tr>
+                  <th class="px-5 py-3.5">Cliente</th>
+                  <th class="px-5 py-3.5">Nombre Conexión</th>
+                  <th class="px-5 py-3.5">Motor</th>
+                  <th class="px-5 py-3.5">Host / Servidor</th>
+                  <th class="px-5 py-3.5">Base de Datos</th>
+                  <th class="px-5 py-3.5">Modo & Ambiente</th>
+                  <th class="px-5 py-3.5 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                @for (item of allDbConnections; track item.connection.id) {
+                  <tr class="hover:bg-slate-50/70 transition">
+                    <td class="px-5 py-3.5 font-bold text-slate-900">{{ item.clientName }}</td>
+                    <td class="px-5 py-3.5 font-semibold text-slate-800">{{ item.connection.name }}</td>
+                    <td class="px-5 py-3.5">
+                      <span class="px-2 py-0.5 rounded-full font-bold text-[10px]"
+                        [class.bg-blue-100]="item.connection.engine === 'MSSQL'"
+                        [class.text-blue-800]="item.connection.engine === 'MSSQL'"
+                        [class.bg-emerald-100]="item.connection.engine === 'POSTGRESQL'"
+                        [class.text-emerald-800]="item.connection.engine === 'POSTGRESQL'"
+                        [class.bg-orange-100]="item.connection.engine === 'MYSQL'"
+                        [class.text-orange-800]="item.connection.engine === 'MYSQL'">
+                        {{ item.connection.engine }}
+                      </span>
+                    </td>
+                    <td class="px-5 py-3.5 font-mono text-slate-600 text-[11px]">
+                      {{ item.connection.host }}:{{ item.connection.port }}
+                    </td>
+                    <td class="px-5 py-3.5 font-mono font-bold text-slate-800">
+                      {{ item.connection.databaseName }}
+                    </td>
+                    <td class="px-5 py-3.5">
+                      <div class="flex items-center space-x-1.5">
+                        <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold text-[9px] border border-emerald-200">
+                          Solo Lectura
+                        </span>
+                        <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold text-[9px]">
+                          {{ item.connection.environment }}
+                        </span>
+                      </div>
+                    </td>
+                    <td class="px-5 py-3.5 text-right">
+                      <div class="flex items-center justify-end space-x-2">
+                        <button
+                          (click)="openEditConnectionModal(item)"
+                          class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] border border-slate-200 transition cursor-pointer inline-flex items-center space-x-1"
+                          title="Editar parámetros de la conexión"
+                        >
+                          <span>✏️</span>
+                          <span>Editar</span>
+                        </button>
+
+                        <button
+                          (click)="runConnectionTest(item.connection.id, item.connection.name)"
+                          [disabled]="testingConnId() === item.connection.id"
+                          class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-[11px] shadow-sm transition cursor-pointer disabled:opacity-50 inline-flex items-center space-x-1"
+                        >
+                          @if (testingConnId() === item.connection.id) {
+                            <span>⏳ Probando...</span>
+                          } @else {
+                            <span>⚡ Probar</span>
+                          }
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    }
+
+    <!-- VISTA 5: CONFIGURACIÓN -> GESTIÓN DE USUARIOS -->
+    @else if (activeSubmenu() === 'users' || activeMainView() === 'users') {
+      <main class="flex-1 overflow-y-auto p-6 custom-scrollbar animate-fade-in">
+        <div class="max-w-7xl mx-auto space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-xl font-black text-slate-900 tracking-tight">Gestión de Usuarios</h1>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Administra cuentas de acceso, roles asignados y clientes autorizados en la plataforma.
+              </p>
+            </div>
+            <button
+              (click)="openNewUserModal()"
+              class="px-4 py-2 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-500/20 flex items-center space-x-1.5 transition cursor-pointer"
+            >
+              <span>+</span>
+              <span>Nuevo Usuario</span>
+            </button>
+          </div>
+
+          <!-- Tabla de Usuarios -->
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                <tr>
+                  <th class="px-5 py-3.5">Usuario</th>
+                  <th class="px-5 py-3.5">Nombre Completo</th>
+                  <th class="px-5 py-3.5">Correo Electrónico</th>
+                  <th class="px-5 py-3.5">Roles Asignados</th>
+                  <th class="px-5 py-3.5">Estado</th>
+                  <th class="px-5 py-3.5 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                @for (u of usersList(); track u.id) {
+                  <tr class="hover:bg-slate-50/70 transition">
+                    <td class="px-5 py-3.5 font-bold font-mono text-slate-900">{{ u.username }}</td>
+                    <td class="px-5 py-3.5 font-semibold text-slate-800">{{ u.firstName }} {{ u.lastName }}</td>
+                    <td class="px-5 py-3.5 text-slate-500">{{ u.email }}</td>
+                    <td class="px-5 py-3.5">
+                      <div class="flex flex-wrap gap-1">
+                        @for (r of u.roles; track r) {
+                          <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold text-[10px]">
+                            {{ r }}
+                          </span>
+                        }
+                      </div>
+                    </td>
+                    <td class="px-5 py-3.5">
+                      @if (u.isActive !== false) {
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] flex items-center space-x-1 w-max">
+                          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          <span>Activo</span>
+                        </span>
+                      } @else {
+                        <span class="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-bold text-[10px] flex items-center space-x-1 w-max">
+                          <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                          <span>Inactivo</span>
+                        </span>
+                      }
+                    </td>
+                    <td class="px-5 py-3.5 text-right">
+                      <button
+                        (click)="toggleUserActiveStatus(u)"
+                        class="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer"
+                        [class.border-red-200]="u.isActive !== false"
+                        [class.text-red-700]="u.isActive !== false"
+                        [class.hover:bg-red-50]="u.isActive !== false"
+                        [class.border-emerald-200]="u.isActive === false"
+                        [class.text-emerald-700]="u.isActive === false"
+                        [class.hover:bg-emerald-50]="u.isActive === false"
+                      >
+                        {{ u.isActive !== false ? 'Desactivar' : 'Activar' }}
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="p-8 text-center text-slate-400">
+                      Cargando usuarios desde la base de datos...
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    }
+
+    <!-- VISTA 6: CONFIGURACIÓN -> ROLES Y MATRIZ RBAC -->
+    @else if (activeSubmenu() === 'roles' || activeMainView() === 'roles') {
+      <main class="flex-1 overflow-y-auto p-6 custom-scrollbar animate-fade-in">
+        <div class="max-w-7xl mx-auto space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-xl font-black text-slate-900 tracking-tight">Roles y Permisos del Sistema (RBAC)</h1>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Crea roles personalizados y configura la matriz de permisos para cada perfil sin tocar código.
+              </p>
+            </div>
+            <button
+              (click)="openNewRoleModal()"
+              class="px-4 py-2 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-500/20 flex items-center space-x-1.5 transition cursor-pointer"
+            >
+              <span>+</span>
+              <span>Nuevo Rol</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Columna Izquierda: Lista de Roles (4 cols) -->
+            <div class="lg:col-span-4 space-y-3">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Roles Configurados</h3>
+              <div class="space-y-2">
+                @for (role of rolesList(); track role.id) {
+                  <div
+                    (click)="selectRole(role)"
+                    class="p-4 rounded-xl border cursor-pointer transition-all duration-150 select-none"
+                    [class.bg-white]="selectedRoleId() === role.id"
+                    [class.border-blue-600]="selectedRoleId() === role.id"
+                    [class.shadow-md]="selectedRoleId() === role.id"
+                    [class.ring-2]="selectedRoleId() === role.id"
+                    [class.ring-blue-100]="selectedRoleId() === role.id"
+                    [class.bg-slate-50]="selectedRoleId() !== role.id"
+                    [class.border-slate-200]="selectedRoleId() !== role.id"
+                    [class.hover:bg-white]="selectedRoleId() !== role.id"
+                  >
+                    <div class="flex items-center justify-between">
+                      <h4 class="font-bold text-sm text-slate-900">{{ role.name }}</h4>
+                      @if (role.isSystemRole) {
+                        <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] font-bold">Sistema</span>
+                      } @else {
+                        <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">Personalizado</span>
+                      }
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1 leading-relaxed">{{ role.description || 'Sin descripción' }}</p>
+                    <div class="mt-2 text-[10px] text-blue-600 font-semibold">
+                      {{ role.permissions.length }} permisos asignados ➔
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Columna Derecha: Matriz de Permisos (8 cols) -->
+            <div class="lg:col-span-8 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col">
+              <div class="flex items-center justify-between pb-4 border-b border-slate-200 mb-5">
+                <div>
+                  <h3 class="font-bold text-base text-slate-900">
+                    Configuración de Permisos
+                  </h3>
+                  <p class="text-xs text-slate-500">
+                    Marca o desmarca las acciones autorizadas para el rol seleccionado.
+                  </p>
+                </div>
+                <button
+                  (click)="saveRolePermissions()"
+                  [disabled]="isSavingPermissions() || !selectedRoleId()"
+                  class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition cursor-pointer disabled:opacity-50"
+                >
+                  {{ isSavingPermissions() ? 'Guardando...' : '💾 Guardar Permisos' }}
+                </button>
+              </div>
+
+              <!-- Matriz Agrupada por Módulo -->
+              <div class="space-y-6 flex-1 overflow-y-auto custom-scrollbar pr-2">
+                @for (moduleEntry of getPermissionsByModule() | keyvalue; track moduleEntry.key) {
+                  <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                    <div class="flex items-center space-x-2 mb-3">
+                      <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                      <h4 class="font-bold text-xs uppercase tracking-wider text-slate-800">
+                        Módulo {{ moduleEntry.key }}
+                      </h4>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      @for (p of moduleEntry.value; track p.id) {
+                        <label
+                          (click)="togglePermission(p.id)"
+                          class="p-2.5 rounded-lg border flex items-start space-x-2.5 cursor-pointer transition select-none"
+                          [class.bg-blue-50]="isPermissionActive(p.id)"
+                          [class.border-blue-300]="isPermissionActive(p.id)"
+                          [class.bg-white]="!isPermissionActive(p.id)"
+                          [class.border-slate-200]="!isPermissionActive(p.id)"
+                        >
+                          <input
+                            type="checkbox"
+                            [checked]="isPermissionActive(p.id)"
+                            class="mt-0.5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          />
+                          <div>
+                            <p class="font-semibold text-xs text-slate-900 leading-tight">{{ p.description }}</p>
+                            <p class="font-mono text-[10px] text-slate-400 mt-0.5">{{ p.id }}</p>
+                          </div>
+                        </label>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    }
+
+    <!-- VISTA 7: CONFIGURACIÓN -> BITÁCORA DE AUDITORÍA -->
+    @else if (activeSubmenu() === 'audit') {
+      <main class="flex-1 overflow-y-auto p-6 custom-scrollbar animate-fade-in">
+        <div class="max-w-7xl mx-auto space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-xl font-black text-slate-900 tracking-tight">Bitácora de Auditoría del Sistema</h1>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Registro inmutable de trazabilidad sobre accesos, modificaciones de casos, cambios de roles y sondas a bases de datos.
+              </p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                ● Auditoría Activa
+              </span>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                <tr>
+                  <th class="px-5 py-3.5">Tiempo</th>
+                  <th class="px-5 py-3.5">Acción</th>
+                  <th class="px-5 py-3.5">Usuario</th>
+                  <th class="px-5 py-3.5">Módulo</th>
+                  <th class="px-5 py-3.5">Detalles del Evento</th>
+                  <th class="px-5 py-3.5 text-right">Resultado</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                @for (log of auditLogs(); track log.id) {
+                  <tr class="hover:bg-slate-50/70 transition">
+                    <td class="px-5 py-3.5 text-slate-500 font-mono text-[11px] whitespace-nowrap">{{ log.timestamp }}</td>
+                    <td class="px-5 py-3.5 font-bold font-mono text-slate-900">{{ log.action }}</td>
+                    <td class="px-5 py-3.5 font-semibold text-blue-600">{{ log.user }}</td>
+                    <td class="px-5 py-3.5">
+                      <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold text-[10px]">
+                        {{ log.module }}
+                      </span>
+                    </td>
+                    <td class="px-5 py-3.5 text-slate-700">{{ log.details }}</td>
+                    <td class="px-5 py-3.5 text-right">
+                      <span class="px-2 py-0.5 rounded-full font-bold text-[10px]"
+                        [class.bg-emerald-100]="log.status === 'SUCCESS'"
+                        [class.text-emerald-800]="log.status === 'SUCCESS'"
+                        [class.bg-amber-100]="log.status === 'WARNING'"
+                        [class.text-amber-800]="log.status === 'WARNING'"
+                        [class.bg-blue-100]="log.status === 'INFO'"
+                        [class.text-blue-800]="log.status === 'INFO'">
+                        {{ log.status }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    }
+
+    </div> <!-- Fin ÁREA DE CONTENIDO PRINCIPAL DERECHA -->
+  </div> <!-- Fin APP SHELL PRINCIPAL CON SESIÓN INICIADA Y DASHBOARD LATERAL -->
+
+  <!-- MODAL 1: NUEVO USUARIO -->
+  @if (isNewUserModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden animate-slide-in">
+        <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="text-xl">👤</span>
+            <h3 class="font-bold text-sm tracking-wide">Crear Nuevo Usuario</h3>
+          </div>
+          <button (click)="closeNewUserModal()" class="text-slate-400 hover:text-white text-base cursor-pointer">✕</button>
+        </div>
+
+        <form (ngSubmit)="submitCreateUser()" class="p-5 space-y-4 text-xs">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Nombre</label>
+              <input
+                type="text"
+                name="firstName"
+                [(ngModel)]="newFirstName"
+                placeholder="Ej. Carlos"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Apellido</label>
+              <input
+                type="text"
+                name="lastName"
+                [(ngModel)]="newLastName"
+                placeholder="Ej. Martínez"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Nombre de Usuario</label>
+              <input
+                type="text"
+                name="username"
+                [(ngModel)]="newUsername"
+                placeholder="Ej. cmartinez"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Correo Electrónico</label>
+              <input
+                type="email"
+                name="email"
+                [(ngModel)]="newEmail"
+                placeholder="carlos@empresa.com"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Contraseña Inicial</label>
+            <input
+              type="password"
+              name="password"
+              [(ngModel)]="newPassword"
+              placeholder="Contraseña segura (mínimo 6 caracteres)"
+              class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              required
+            />
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">Roles a Asignar:</label>
+            <div class="grid grid-cols-2 gap-2">
+              @for (r of rolesList(); track r.id) {
+                <label
+                  (click)="toggleRoleSelection(r.id)"
+                  class="p-2 rounded-lg border flex items-center space-x-2 cursor-pointer transition select-none"
+                  [class.bg-blue-50]="selectedRoleIds.includes(r.id)"
+                  [class.border-blue-400]="selectedRoleIds.includes(r.id)"
+                  [class.bg-slate-50]="!selectedRoleIds.includes(r.id)"
+                >
+                  <input type="checkbox" [checked]="selectedRoleIds.includes(r.id)" class="rounded text-blue-600" />
+                  <span class="font-bold text-slate-800">{{ r.name }}</span>
+                </label>
+              }
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-200 flex justify-end space-x-2">
+            <button
+              type="button"
+              (click)="closeNewUserModal()"
+              class="px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              [disabled]="isCreatingUser()"
+              class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 cursor-pointer disabled:opacity-50"
+            >
+              {{ isCreatingUser() ? 'Creando...' : 'Crear Usuario' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL 2: NUEVO ROL PERSONALIZADO -->
+  @if (isNewRoleModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 overflow-hidden animate-slide-in">
+        <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="text-xl">🛡️</span>
+            <h3 class="font-bold text-sm tracking-wide">Crear Nuevo Rol</h3>
+          </div>
+          <button (click)="closeNewRoleModal()" class="text-slate-400 hover:text-white text-base cursor-pointer">✕</button>
+        </div>
+
+        <form (ngSubmit)="submitCreateRole()" class="p-5 space-y-4 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Nombre del Rol:</label>
+            <input
+              type="text"
+              name="roleName"
+              [(ngModel)]="newRoleName"
+              placeholder="Ej. Auditor Contable, QA Tester, Líder Técnico"
+              class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              required
+            />
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Descripción del Perfil:</label>
+            <textarea
+              name="roleDesc"
+              rows="3"
+              [(ngModel)]="newRoleDescription"
+              placeholder="Describa el alcance de responsabilidades y accesos de este rol..."
+              class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            ></textarea>
+          </div>
+
+          <div class="pt-3 border-t border-slate-200 flex justify-end space-x-2">
+            <button
+              type="button"
+              (click)="closeNewRoleModal()"
+              class="px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 cursor-pointer"
+            >
+              Crear Rol
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL 3: REGISTRAR NUEVO CASO TÉCNICO -->
+  @if (isNewCaseModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden animate-slide-in">
+        <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="text-xl">📋</span>
+            <h3 class="font-bold text-sm tracking-wide">Registrar Nuevo Caso Técnico</h3>
+          </div>
+          <button (click)="closeNewCaseModal()" class="text-slate-400 hover:text-white text-base cursor-pointer">✕</button>
+        </div>
+
+        <form (ngSubmit)="createNewCase()" class="p-5 space-y-4 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Título del Caso / Incidente:</label>
+            <input
+              type="text"
+              name="title"
+              [(ngModel)]="newCaseTitle"
+              placeholder="Ej: Descuadre en reporte FT003 o bloqueo de anulación..."
+              class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              required
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Cliente Asociado:</label>
+              <select
+                name="client"
+                [(ngModel)]="newCaseClientId"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+              >
+                @for (c of clients(); track c.id) {
+                  <option [value]="c.id">{{ c.code }} - {{ c.businessName }}</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Prioridad:</label>
+              <select
+                name="priority"
+                [(ngModel)]="newCasePriority"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none font-bold bg-white"
+              >
+                <option value="BAJA">BAJA</option>
+                <option value="MEDIA">MEDIA</option>
+                <option value="ALTA" selected>ALTA</option>
+                <option value="CRITICA">CRÍTICA</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Sistema Afectado:</label>
+              <select
+                name="system"
+                [(ngModel)]="newCaseSystem"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+              >
+                <option value="Contabilidad">Contabilidad</option>
+                <option value="Inventario">Inventario</option>
+                <option value="Facturación">Facturación</option>
+                <option value="Nómina">Nómina</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Módulo Específico:</label>
+              <input
+                type="text"
+                name="module"
+                [(ngModel)]="newCaseModule"
+                placeholder="Ej: Circular 016, Cierre Anual, Entrada Mercancía"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Descripción Detallada del Problema:</label>
+            <textarea
+              name="description"
+              rows="3"
+              [(ngModel)]="newCaseDescription"
+              placeholder="Describa el comportamiento observado, mensajes de error, valores esperados..."
+              class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              required
+            ></textarea>
+          </div>
+
+          <div class="pt-3 border-t border-slate-200 flex items-center justify-end space-x-2">
+            <button
+              type="button"
+              (click)="closeNewCaseModal()"
+              class="px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              [disabled]="isSubmittingCase()"
+              class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+            >
+              @if (isSubmittingCase()) {
+                <span>Creando...</span>
+              } @else {
+                <span>+ Crear y Abrir Caso</span>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL 4: NUEVO CLIENTE -->
+  @if (isNewClientModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden animate-slide-in">
+        <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="text-xl">🏢</span>
+            <h3 class="font-bold text-sm tracking-wide">Registrar Nuevo Cliente</h3>
+          </div>
+          <button (click)="closeNewClientModal()" class="text-slate-400 hover:text-white text-base cursor-pointer">✕</button>
+        </div>
+
+        <form (ngSubmit)="submitCreateClient()" class="p-5 space-y-4 text-xs">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Código del Cliente</label>
+              <input
+                type="text"
+                name="clientCode"
+                [(ngModel)]="newClientCode"
+                placeholder="CLI-004"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Identificación / NIT</label>
+              <input
+                type="text"
+                name="clientTaxId"
+                [(ngModel)]="newClientTaxId"
+                placeholder="800123456-1"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Razón Social / Entidad</label>
+            <input
+              type="text"
+              name="clientBusinessName"
+              [(ngModel)]="newClientBusinessName"
+              placeholder="Ej: Clínica San Juan Bautista S.A."
+              class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              required
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Nombre de Contacto</label>
+              <input
+                type="text"
+                name="clientContactName"
+                [(ngModel)]="newClientContactName"
+                placeholder="Ing. David Gómez"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Teléfono</label>
+              <input
+                type="text"
+                name="clientContactPhone"
+                [(ngModel)]="newClientContactPhone"
+                placeholder="+57 300 123 4567"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Correo Electrónico de Notificaciones</label>
+            <input
+              type="email"
+              name="clientContactEmail"
+              [(ngModel)]="newClientContactEmail"
+              placeholder="sistemas@clinicasanjuan.com"
+              class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+          </div>
+
+          <div class="pt-3 border-t border-slate-200 flex items-center justify-end space-x-2">
+            <button
+              type="button"
+              (click)="closeNewClientModal()"
+              class="px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              [disabled]="isCreatingClient()"
+              class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+            >
+              @if (isCreatingClient()) {
+                <span>Registrando...</span>
+              } @else {
+                <span>+ Registrar Cliente</span>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL 5: NUEVA / EDITAR CONEXIÓN A BASE DE DATOS -->
+  @if (isConnectionModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full border border-slate-200 overflow-hidden animate-slide-in">
+        <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="text-xl">🗄️</span>
+            <h3 class="font-bold text-sm tracking-wide">
+              {{ connectionModalMode() === 'create' ? 'Registrar Nueva Conexión a Base de Datos' : 'Editar Conexión a Base de Datos' }}
+            </h3>
+          </div>
+          <button (click)="closeConnectionModal()" class="text-slate-400 hover:text-white text-base cursor-pointer">✕</button>
+        </div>
+
+        <form (ngSubmit)="submitConnectionForm()" class="p-5 space-y-4 text-xs">
+          <!-- Alerta de Seguridad y Cifrado -->
+          <div class="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-[11px] flex items-start space-x-2">
+            <span class="text-base leading-none">🔒</span>
+            <div>
+              <p class="font-bold">Seguridad y Cifrado AES-256-GCM Activo:</p>
+              <p class="text-blue-800 leading-relaxed mt-0.5">
+                Las credenciales se cifran en el backend y nunca se exponen en texto plano. Se recomienda utilizar un usuario de base de datos con permisos estrictos de Solo Lectura.
+              </p>
+            </div>
+          </div>
+
+          <!-- Cliente Asociado y Nombre Descriptivo -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Cliente Asociado *</label>
+              <select
+                name="connClientId"
+                [(ngModel)]="connFormClientId"
+                [disabled]="connectionModalMode() === 'edit'"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white disabled:bg-slate-100"
+                required
+              >
+                @for (c of clients(); track c.id) {
+                  <option [value]="c.id">{{ c.businessName }} ({{ c.code }})</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Nombre de la Conexión *</label>
+              <input
+                type="text"
+                name="connName"
+                [(ngModel)]="connFormName"
+                placeholder="Ej. Servidor Principal Contabilidad"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Motor de BD y Ambiente -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Motor de Base de Datos *</label>
+              <select
+                name="connEngine"
+                [(ngModel)]="connFormEngine"
+                (change)="onConnEngineChange()"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white font-semibold"
+              >
+                <option value="MSSQL">Microsoft SQL Server</option>
+                <option value="POSTGRESQL">PostgreSQL</option>
+                <option value="MYSQL">MySQL / MariaDB</option>
+                <option value="ORACLE">Oracle Database</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Ambiente *</label>
+              <select
+                name="connEnvironment"
+                [(ngModel)]="connFormEnvironment"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+              >
+                <option value="PRODUCCION">Producción</option>
+                <option value="PRUEBAS">Pruebas / QA</option>
+                <option value="DESARROLLO">Desarrollo</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Host, Puerto e Instancia -->
+          <div class="grid grid-cols-12 gap-3">
+            <div class="col-span-12 sm:col-span-6">
+              <label class="block font-bold text-slate-700 mb-1">Servidor / Host (IP o Hostname) *</label>
+              <input
+                type="text"
+                name="connHost"
+                [(ngModel)]="connFormHost"
+                placeholder="10.120.1.4 o sql.cliente.com"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+
+            <div class="col-span-6 sm:col-span-3">
+              <label class="block font-bold text-slate-700 mb-1">Puerto *</label>
+              <input
+                type="number"
+                name="connPort"
+                [(ngModel)]="connFormPort"
+                placeholder="1433"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+
+            <div class="col-span-6 sm:col-span-3">
+              <label class="block font-bold text-slate-700 mb-1">Instancia (Opcional)</label>
+              <input
+                type="text"
+                name="connInstanceName"
+                [(ngModel)]="connFormInstanceName"
+                placeholder="Ej. SISMA"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <!-- Base de Datos, Usuario y Contraseña -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Base de Datos *</label>
+              <input
+                type="text"
+                name="connDatabaseName"
+                [(ngModel)]="connFormDatabaseName"
+                placeholder="Ej. SismaContabilidad"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Usuario DB *</label>
+              <input
+                type="text"
+                name="connUsername"
+                [(ngModel)]="connFormUsername"
+                placeholder="sa_lectura"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">
+                Contraseña DB {{ connectionModalMode() === 'create' ? '*' : '(Opcional)' }}
+              </label>
+              <input
+                type="password"
+                name="connPassword"
+                [(ngModel)]="connFormPassword"
+                [placeholder]="connectionModalMode() === 'create' ? 'Contraseña secreta' : '(Sin cambios)'"
+                class="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                [required]="connectionModalMode() === 'create'"
+              />
+            </div>
+          </div>
+
+          <!-- Checkboxes de Seguridad y Estado -->
+          <div class="pt-2 flex flex-wrap gap-4 border-t border-slate-200">
+            <label class="flex items-center space-x-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                name="connIsReadOnly"
+                [(ngModel)]="connFormIsReadOnly"
+                class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+              />
+              <span class="font-bold text-xs text-slate-800">🔒 Conexión en Modo Solo Lectura (Recomendado)</span>
+            </label>
+
+            <label class="flex items-center space-x-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                name="connIsActive"
+                [(ngModel)]="connFormIsActive"
+                class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+              />
+              <span class="font-bold text-xs text-slate-800">🟢 Conexión Activa</span>
+            </label>
+          </div>
+
+          <!-- Botones de Acción -->
+          <div class="pt-3 border-t border-slate-200 flex items-center justify-end space-x-2">
+            <button
+              type="button"
+              (click)="closeConnectionModal()"
+              class="px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              [disabled]="isSubmittingConnection()"
+              class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+            >
+              @if (isSubmittingConnection()) {
+                <span>Guardando...</span>
+              } @else {
+                <span>{{ connectionModalMode() === 'create' ? '+ Registrar Conexión' : '💾 Guardar Cambios' }}</span>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (toastMessage(); as msg) {
+    <div class="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center space-x-3 text-xs animate-slide-in">
+      <span>🔔</span>
+      <span>{{ msg }}</span>
+    </div>
+  }
+}

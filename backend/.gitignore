@@ -1,0 +1,6 @@
+# NestJS backend ignore
+node_modules/
+dist/
+.env
+!.env.example
+*.log

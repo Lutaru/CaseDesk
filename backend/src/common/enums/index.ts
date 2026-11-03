@@ -1,0 +1,54 @@
+export enum CaseStatus {
+  REGISTRADO = 'REGISTRADO',
+  PENDIENTE_ANALISIS = 'PENDIENTE_ANALISIS',
+  ANALIZANDO = 'ANALIZANDO',
+  GENERANDO_ANALISIS = 'GENERANDO_ANALISIS',
+  PENDIENTE_INFORMACION = 'PENDIENTE_INFORMACION',
+  EN_DESARROLLO = 'EN_DESARROLLO',
+  EN_PRUEBAS = 'EN_PRUEBAS',
+  SOLUCIONADO = 'SOLUCIONADO',
+  PENDIENTE_CONFIRMACION = 'PENDIENTE_CONFIRMACION',
+  CERRADO = 'CERRADO',
+  NO_REPRODUCIBLE = 'NO_REPRODUCIBLE',
+  CANCELADO = 'CANCELADO',
+}
+
+export enum CasePriority {
+  BAJA = 'BAJA',
+  MEDIA = 'MEDIA',
+  ALTA = 'ALTA',
+  CRITICA = 'CRITICA',
+}
+
+export enum CaseType {
+  ERROR = 'ERROR',
+  INCIDENTE = 'INCIDENTE',
+  SOLICITUD = 'SOLICITUD',
+  MEJORA = 'MEJORA',
+  CONSULTA = 'CONSULTA',
+}
+
+export enum DatabaseEngine {
+  MSSQL = 'MSSQL',
+  PGSQL = 'PGSQL',
+  MYSQL = 'MYSQL',
+}
+
+export enum EnvironmentType {
+  DESARROLLO = 'DESARROLLO',
+  PRUEBAS = 'PRUEBAS',
+  PRODUCCION = 'PRODUCCION',
+}
+
+export enum ClientResponseStatus {
+  BORRADOR = 'BORRADOR',
+  EN_REVISION = 'EN_REVISION',
+  PUBLICADO = 'PUBLICADO',
+}
+
+export enum SystemRole {
+  ADMIN = 'Administrador',
+  DEVELOPER = 'Desarrollador',
+  SUPPORT = 'Soporte Técnico',
+  CLIENT = 'Cliente',
+}
